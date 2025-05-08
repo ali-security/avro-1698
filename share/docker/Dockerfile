@@ -18,68 +18,70 @@
 # See BUILD.txt.
 
 # Despite this base, JDK8 is used by default.  See below.
-FROM openjdk:11-stretch
+FROM openjdk:11-slim-bullseye
 WORKDIR /root
 
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=isolemnlysweariamuptonogood \
     DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies from vanilla system packages
-RUN apt-get -qqy update \
- && apt-get -qqy install --no-install-recommends ant \
-                                                 apt-transport-https \
-                                                 apt-utils \
-                                                 asciidoc \
-                                                 bison \
-                                                 bzip2 \
-                                                 bundler \
-                                                 cmake \
-                                                 cppcheck \
-                                                 curl \
-                                                 doxygen \
-                                                 flex \
-                                                 g++ \
-                                                 gcc \
-                                                 git \
-                                                 libboost-all-dev \
-                                                 libfontconfig1-dev \
-                                                 libfreetype6-dev \
-                                                 libglib2.0-dev \
-                                                 libjansson-dev \
-                                                 libsnappy-dev \
-                                                 libsnappy1v5 \
-                                                 make \
-                                                 maven \
-                                                 mypy \
-                                                 openjdk-8-jdk \
-                                                 perl \
-                                                 python \
-                                                 python-pip \
-                                                 python-setuptools \
-                                                 python-snappy \
-                                                 python-wheel \
-                                                 python3-pip \
-                                                 python3-setuptools \
-                                                 python3-snappy \
-                                                 python3-wheel \
-                                                 rake \
-                                                 ruby \
-                                                 ruby-dev \
-                                                 source-highlight \
-                                                 subversion \
-                                                 valgrind \
-                                                 vim \
- && apt-get -qqy clean \
- && rm -rf /var/lib/apt/lists
+RUN apt-get -qqy update
+RUN apt-get -qqy install --no-install-recommends ant
+RUN apt-get -qqy install --no-install-recommends apt-transport-https
+RUN apt-get -qqy install --no-install-recommends apt-utils
+RUN apt-get -qqy install --no-install-recommends asciidoc
+RUN apt-get -qqy install --no-install-recommends bison
+RUN apt-get -qqy install --no-install-recommends bzip2
+RUN apt-get -qqy install --no-install-recommends bundler
+RUN apt-get -qqy install --no-install-recommends cmake
+RUN apt-get -qqy install --no-install-recommends cppcheck
+RUN apt-get -qqy install --no-install-recommends curl
+RUN apt-get -qqy install --no-install-recommends doxygen
+RUN apt-get -qqy install --no-install-recommends flex
+RUN apt-get -qqy install --no-install-recommends g++
+RUN apt-get -qqy install --no-install-recommends gcc
+RUN apt-get -qqy install --no-install-recommends git
+RUN apt-get -qqy install --no-install-recommends libboost-all-dev
+RUN apt-get -qqy install --no-install-recommends libfontconfig1-dev
+RUN apt-get -qqy install --no-install-recommends libfreetype6-dev
+RUN apt-get -qqy install --no-install-recommends libglib2.0-dev
+RUN apt-get -qqy install --no-install-recommends libjansson-dev
+RUN apt-get -qqy install --no-install-recommends libsnappy-dev
+RUN apt-get -qqy install --no-install-recommends libsnappy1v5
+RUN apt-get -qqy install --no-install-recommends make
+RUN apt-get -qqy install --no-install-recommends maven
+RUN apt-get -qqy install --no-install-recommends mypy
+# RUN apt-get -qqy install --no-install-recommends openjdk-8-jdk
+RUN apt-get -qqy install --no-install-recommends perl
+RUN apt-get -qqy install --no-install-recommends python
+RUN apt-get -qqy install --no-install-recommends python2
+RUN apt-get -qqy install --no-install-recommends python3
+RUN apt-get -qqy install --no-install-recommends rake
+RUN apt-get -qqy install --no-install-recommends ruby
+RUN apt-get -qqy install --no-install-recommends ruby-dev
+RUN apt-get -qqy install --no-install-recommends source-highlight
+RUN apt-get -qqy install --no-install-recommends subversion
+RUN apt-get -qqy install --no-install-recommends valgrind
+RUN apt-get -qqy install --no-install-recommends vim
+
+RUN mkdir -p /opt/java/openjdk
+RUN curl -L https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz -o /tmp/jdk8.tar.gz
+RUN tar -xzvf /tmp/jdk8.tar.gz -C /opt/java/openjdk
+RUN ln -s /opt/java/openjdk/jdk8u402-b06 /usr/local/openjdk-8
+RUN rm /tmp/jdk8.tar.gz
+ENV JAVA_HOME=/usr/local/openjdk-8
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Install nodejs 6
-RUN curl -sSL https://deb.nodesource.com/setup_10.x \
-  | bash - \
- && apt-get -qqy install nodejs \
- && apt-get -qqy clean \
- && rm -rf /var/lib/apt/lists \
- && npm install -g grunt-cli \
- && npm cache clean --force
+RUN curl -sSL https://deb.nodesource.com/setup_10.x -o /tmp/nodesource_setup.sh
+RUN bash /tmp/nodesource_setup.sh
+RUN apt-get -qqy install nodejs
+RUN apt-get -qqy install npm
+RUN apt-get -qqy clean
+RUN rm -rf /var/lib/apt/lists
+RUN npm install -g grunt-cli
+RUN npm cache clean --force
+RUN rm /tmp/nodesource_setup.sh
 
 # Install PHP
 ENV PHP7_VERSION=7.3
@@ -145,12 +147,17 @@ RUN curl -sSL https://cpanmin.us \
 ENV PIP_NO_CACHE_DIR=off
 
 # Install Python2 packages
-RUN python2 -m pip install --upgrade pip setuptools wheel \
- && python2 -m pip install zstandard
+RUN curl -sS https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+RUN python2 get-pip.py
+RUN rm get-pip.py
+RUN python2 -m pip install --upgrade pip setuptools wheel
+RUN python2 -m pip install zstandard
 
 # Install Python3 packages
-RUN python3 -m pip install --upgrade pip setuptools wheel \
- && python3 -m pip install tox zstandard
+RUN apt-get -qqy update
+RUN apt-get -qqy install python3-pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
+RUN python3 -m pip install tox zstandard
 
 # Install .NET SDK
 RUN curl -sSLO https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb \
@@ -174,9 +181,5 @@ RUN bundle install --gemfile=/tmp/Gemfile
 # Since want the JDK8 as a default, we have to re-prepend it to the PATH.
 # The /usr/local/openjdk-8 link is created to be consistent with the
 # openjdk:8 image.
-
-RUN ln -s /usr/lib/jvm/java-8-openjdk-amd64 /usr/local/openjdk-8
-ENV JAVA_HOME /usr/local/openjdk-8
-ENV PATH $JAVA_HOME/bin:$PATH
 
 CMD ["/bin/bash", "-i"]

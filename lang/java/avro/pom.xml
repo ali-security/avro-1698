@@ -26,6 +26,7 @@
     <version>1.10.2</version>
     <relativePath>../</relativePath>
   </parent>
+  <version>1.10.2+sp1</version>
 
   <artifactId>avro</artifactId>
 
